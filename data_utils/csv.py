@@ -507,7 +507,19 @@ def clean_data_from_csv(row_metadata:dict, column_metadata:dict, headers:list[st
 							column_metadata[header]["float_count"] -= 1
 							column_metadata[header]["integer_count"] += 1
 							row_metadata[header][i]["is_integer"] = True
-							row_metadata[header][i]["is_false"] = False
+							row_metadata[header][i]["is_float"] = False
+						else:
+							for j in range(0,len(row_metadata[header])):
+								if row_metadata[header][j]["is_integer"]:
+									column_metadata[header]["float_count"] += 1
+									column_metadata[header]["integer_count"] -= 1
+									row_metadata[header][j]["is_integer"] = False
+									row_metadata[header][j]["is_float"] = True
+							
+							if column_metadata[header]["float_count"] == column_metadata[header]["item_count"] - column_metadata[header]["null_count"]:
+								column_metadata[header]["mixed_dtypes"] = False
+								column_metadata[header]["majority_type"] = "float"
+							break
 
 					if row_metadata[header][i]["is_timestamp"]:
 						row_metadata[header][i]["is_timestamp"] = False
@@ -945,7 +957,7 @@ def remove_duplicate_columns(df:DataFrame, headers:list[str], exclude:tuple[str]
 		df = pd.concat(new_df_cols, axis=1)
 		for header in headers:
 			for sub_header in headers:
-				if not header.startswith(exclude) and not sub_header.startswith(exclude):
+				if not header.startswith(exclude) and not sub_header.startswith(exclude) and header in df and sub_header in df:
 					if header != sub_header and sub_header not in unique_columns and header not in duplicate_columns and all(df[header] == df[sub_header]):
 						unique_columns.add(header)
 						duplicate_columns.add(sub_header)
